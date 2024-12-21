@@ -2,6 +2,7 @@
   "name": "bookshelf-api",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/server.js"
@@ -9,5 +10,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "@hapi/hapi": "^21.3.12",
+    "eslint": "^9.17.0",
+    "nanoid": "^5.0.9"
+  }
 }
