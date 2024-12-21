@@ -1,9 +1,11 @@
 import { nanoid } from 'nanoid';
+import books from './books.js';
 
-let books = [];
-
-const addBook = (request, h) => {
-  const { name, year, author, summary, publisher, pageCount, readPage, reading } = request.payload;
+const addBookHandler = (request, h) => {
+  const {
+    name, year, author, summary, publisher,
+    pageCount, readPage, reading,
+  } = request.payload;
 
   if (!name) {
     return h.response({
@@ -19,24 +21,15 @@ const addBook = (request, h) => {
     }).code(400);
   }
 
-  const id = nanoid();
-  const finished = pageCount === readPage;
+  const id = nanoid(16);
   const insertedAt = new Date().toISOString();
   const updatedAt = insertedAt;
+  const finished = pageCount === readPage;
 
   const newBook = {
-    id,
-    name,
-    year,
-    author,
-    summary,
-    publisher,
-    pageCount,
-    readPage,
-    finished,
-    reading,
-    insertedAt,
-    updatedAt,
+    id, name, year, author, summary, publisher,
+    pageCount, readPage, finished, reading,
+    insertedAt, updatedAt,
   };
 
   books.push(newBook);
@@ -50,16 +43,37 @@ const addBook = (request, h) => {
   }).code(201);
 };
 
-const getAllBooks = (request, h) => {
+const getAllBooksHandler = (request, h) => {
+  const { name, reading, finished } = request.query;
+
+  let filteredBooks = books;
+
+  if (name) {
+    filteredBooks = filteredBooks.filter((book) =>
+      book.name.toLowerCase().includes(name.toLowerCase()));
+  }
+
+  if (reading !== undefined) {
+    filteredBooks = filteredBooks.filter((book) =>
+      book.reading === (reading === '1'));
+  }
+
+  if (finished !== undefined) {
+    filteredBooks = filteredBooks.filter((book) =>
+      book.finished === (finished === '1'));
+  }
+
   return h.response({
     status: 'success',
     data: {
-      books: books.map(({ id, name, publisher }) => ({ id, name, publisher })),
+      books: filteredBooks.map(({ id, name, publisher }) => ({
+        id, name, publisher,
+      })),
     },
   }).code(200);
 };
 
-const getBookById = (request, h) => {
+const getBookByIdHandler = (request, h) => {
   const { bookId } = request.params;
   const book = books.find((b) => b.id === bookId);
 
@@ -78,9 +92,21 @@ const getBookById = (request, h) => {
   }).code(200);
 };
 
-const updateBook = (request, h) => {
+const updateBookHandler = (request, h) => {
   const { bookId } = request.params;
-  const { name, year, author, summary, publisher, pageCount, readPage, reading } = request.payload;
+  const {
+    name, year, author, summary, publisher,
+    pageCount, readPage, reading,
+  } = request.payload;
+
+  const index = books.findIndex((b) => b.id === bookId);
+
+  if (index === -1) {
+    return h.response({
+      status: 'fail',
+      message: 'Gagal memperbarui buku. Id tidak ditemukan',
+    }).code(404);
+  }
 
   if (!name) {
     return h.response({
@@ -96,30 +122,13 @@ const updateBook = (request, h) => {
     }).code(400);
   }
 
-  const index = books.findIndex((b) => b.id === bookId);
-
-  if (index === -1) {
-    return h.response({
-      status: 'fail',
-      message: 'Gagal memperbarui buku. Id tidak ditemukan',
-    }).code(404);
-  }
-
   const updatedAt = new Date().toISOString();
   const finished = pageCount === readPage;
 
   books[index] = {
     ...books[index],
-    name,
-    year,
-    author,
-    summary,
-    publisher,
-    pageCount,
-    readPage,
-    reading,
-    finished,
-    updatedAt,
+    name, year, author, summary, publisher,
+    pageCount, readPage, reading, finished, updatedAt,
   };
 
   return h.response({
@@ -128,8 +137,9 @@ const updateBook = (request, h) => {
   }).code(200);
 };
 
-const deleteBook = (request, h) => {
+const deleteBookHandler = (request, h) => {
   const { bookId } = request.params;
+
   const index = books.findIndex((b) => b.id === bookId);
 
   if (index === -1) {
@@ -147,4 +157,10 @@ const deleteBook = (request, h) => {
   }).code(200);
 };
 
-export { addBook, getAllBooks, getBookById, updateBook, deleteBook };
+export {
+  addBookHandler,
+  getAllBooksHandler,
+  getBookByIdHandler,
+  updateBookHandler,
+  deleteBookHandler,
+};
